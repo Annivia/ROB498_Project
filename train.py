@@ -3,6 +3,7 @@ import gym
 import os
 import ray
 import ray.rllib.agents.ppo as ppo
+from ray.rllib.algorithms.ppo.ppo import PPO, PPOConfig
 from ray.rllib.algorithms.dqn.dqn import DQN, DQNConfig
 from ray.rllib.algorithms.ddpg.ddpg import DDPG, DDPGConfig
 from ray.rllib.algorithms.sac.sac import SAC, SACConfig
@@ -16,13 +17,18 @@ import datetime
 def create_environment(env_config):
     return PandaDiskPushingEnv(**env_config)
 
-
 def set_up(algorithm):
 
     if algorithm == "PPO":
-        config = ppo.DEFAULT_CONFIG.copy()
-        config["log_level"] = "WARN"
-        agent = ppo.PPOTrainer(config, env=PandaDiskPushingEnv)
+        config = PPOConfig()#.environment(PandaDiskPushingEnv, env_config=env_config)
+        config = config.resources(num_gpus=1)  
+        config = config.rollouts(num_rollout_workers=2) 
+        config = config.framework('torch')
+        agent = PPO(config, env=PandaDiskPushingEnv)
+
+    # if algorithm == "PPO":
+    #     config = ppo.DEFAULT_CONFIG.copy()
+    #     agent = ppo.PPOTrainer(config, env=PandaDiskPushingEnv)
     
     # elif algorithm == "DQN":
     #     config = DQNConfig().copy()
@@ -30,18 +36,22 @@ def set_up(algorithm):
     #     agent = DQN(config, env=PandaDiskPushingEnv)
 
     elif algorithm == "DDPG":
-        config = DDPGConfig().copy()
-        config["log_level"] = "WARN"
+        config = DDPGConfig()
+        config = config.resources(num_gpus=1)  
+        config = config.rollouts(num_rollout_workers=2) 
+        config = config.framework('torch')
         agent = DDPG(config, env=PandaDiskPushingEnv)
 
     elif algorithm == "SAC":
-        config = SACConfig().copy()
-        config["log_level"] = "WARN"
+        config = SACConfig().training(gamma=0.9, lr=0.01, tau=0.005)
+        config = config.resources(num_gpus=1)  
+        config = config.rollouts(num_rollout_workers=2) 
+        config = config.framework('torch')
         agent = SAC(config, env=PandaDiskPushingEnv)
 
     else:
         raise ValueError(f"Unsupported algorithm: {algorithm}")
-    return config, agent
+    return agent
 
 
 def train(algorithm, iter_num):

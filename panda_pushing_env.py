@@ -96,12 +96,12 @@ class PandaDiskPushingEnv(gym.Env):
         # self.push_length = 0.02
         self.push_length = 0.1
 
-        self.space_limits = [np.array([0.1, -0.35]), np.array([.8, 0.35])]  # xy limits
+        self.space_limits = [np.array([0.1, -0.35], dtype=np.float32), np.array([.8, 0.35], dtype=np.float32)]  # xy limits
         self.observation_space = spaces.Box(low=np.array([self.space_limits[0][0], self.space_limits[0][1]]),
                                             high=np.array([self.space_limits[1][0], self.space_limits[1][
                                                 1]]))  # TODO: Get observation space -- maybe a tuple of (top_img, block_position)
-        self.action_space = spaces.Box(low=np.array([-0.25, -np.pi * 0.25, 0]),
-                                       high=np.array([0.25, np.pi * 0.25, 1]))  #
+        self.action_space = spaces.Box(low=np.array([-0.25, -np.pi * 0.25, 0], dtype=np.float32),
+                                       high=np.array([0.25, np.pi * 0.25, 1], dtype=np.float32))  #
 
     def reset(self, random_start=False):
         self._set_object_positions(random_start=random_start)
@@ -148,21 +148,34 @@ class PandaDiskPushingEnv(gym.Env):
         return state
     
     def _reward(self, state):
-        if np.any(state < self.observation_space.low) or np.any(state > self.observation_space.high):
-            return -20
-        if np.all(state == TARGET_POSE_OBSTACLES):
-            return 40
+
+        if self.reward_type == 'euclidean':
+            print(self.reward_type)
+            if np.any(state < self.observation_space.low) or np.any(state > self.observation_space.high):
+                return -20
+            if np.all(state == TARGET_POSE_OBSTACLES):
+                return 40
+            distance_to_target = np.linalg.norm(TARGET_POSE_OBSTACLES - state)
+            distance_to_obstacle = np.linalg.norm(OBSTACLE_CENTRE - state)
+            punish = 0
+            if distance_to_obstacle < OBSTACLE_RADIUS:
+                punish = -20
+            reward = -distance_to_target*10 + punish
+            return reward
         
-        distance_to_target = np.linalg.norm(TARGET_POSE_OBSTACLES - state)
-        distance_to_obstacle = np.linalg.norm(OBSTACLE_CENTRE - state)
-        punish = 0
-
-        if distance_to_obstacle < OBSTACLE_RADIUS:
-            punish = -20
-
-        reward = -distance_to_target*10 + punish
-
-        return reward
+        elif self.reward_type == 'square':
+            print(self.reward_type)
+            if np.any(state < self.observation_space.low) or np.any(state > self.observation_space.high):
+                return -20
+            if np.all(state == TARGET_POSE_OBSTACLES):
+                return 40
+            distance_to_target = np.linalg.norm(TARGET_POSE_OBSTACLES - state)
+            distance_to_obstacle = np.linalg.norm(OBSTACLE_CENTRE - state)
+            punish = 0
+            if distance_to_obstacle < OBSTACLE_RADIUS:
+                punish = -20
+            reward = -distance_to_target*10 + punish
+            return reward
 
     def step(self, action):
         # check that the action is valid
