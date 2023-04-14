@@ -86,8 +86,7 @@ class PandaDiskPushingEnv(gym.Env):
         self.camera_height = camera_heigh
         self.camera_width = camera_width
 
-        p.resetDebugVisualizerCamera(cameraDistance=1.5, cameraYaw=0, cameraPitch=-40,
-                                     cameraTargetPosition=[0.55, -0.35, 0.2])
+        # p.resetDebugVisualizerCamera(cameraDistance=1.5, cameraYaw=0, cameraPitch=-40, cameraTargetPosition=[0.55, -0.35, 0.2])
 
         self.disk_radius = DISK_RADIUS
 
@@ -147,6 +146,23 @@ class PandaDiskPushingEnv(gym.Env):
         # get inital state after reset
         state = self.get_state()
         return state
+    
+    def _reward(self, state):
+        if np.any(state < self.observation_space.low) or np.any(state > self.observation_space.high):
+            return -20
+        if np.all(state == TARGET_POSE_OBSTACLES):
+            return 40
+        
+        distance_to_target = np.linalg.norm(TARGET_POSE_OBSTACLES - state)
+        distance_to_obstacle = np.linalg.norm(OBSTACLE_CENTRE - state)
+        punish = 0
+
+        if distance_to_obstacle < OBSTACLE_RADIUS:
+            punish = -20
+
+        reward = -distance_to_target*10 + punish
+
+        return reward
 
     def step(self, action):
         # check that the action is valid
@@ -156,7 +172,7 @@ class PandaDiskPushingEnv(gym.Env):
                 f'Action {action} is not valid. Make sure you provide an action within the action space limits.')
         self.episode_step_counter += 1
         # Enable smooth motion of the robot arm
-        p.configureDebugVisualizer(p.COV_ENABLE_SINGLE_STEP_RENDERING)
+        # p.configureDebugVisualizer(p.COV_ENABLE_SINGLE_step_RENDERING)
         # Convert the action values to the true ranges
         action = action + 0.001 * np.random.randn(3)
         action = np.clip(action, a_min=self.action_space.low, a_max=self.action_space.high)
@@ -164,10 +180,23 @@ class PandaDiskPushingEnv(gym.Env):
         push_location_fraction, push_angle, push_length_fraction = action[0], action[1], action[2]
         push_location = push_location_fraction * np.pi  # we add some small 5% gap so we make sure we do not surpass the border
         push_length = push_length_fraction * self.push_length
+
         # Perform the action
+        #### May be invalid push
+        # self.push(push_location, push_angle, push_length=push_length)
+
         self.push(push_location, push_angle, push_length=push_length)
+
         state = self.get_state()
-        reward = 0.
+        if np.any(state < self.observation_space.low) or np.any(state > self.observation_space.high):
+            # print("Observation Space: ", state, " Push out of space")
+            state = np.clip(state, a_min=self.observation_space.low, a_max=self.observation_space.high)
+            reward = -100
+            done = True
+            info = {}
+            return state, reward, done, info
+
+        reward = self._reward(state)
         done = self._is_done(state)
         info = {}
         return state, reward, done, info
@@ -271,7 +300,7 @@ class PandaDiskPushingEnv(gym.Env):
 
         if self.debug:
             self._debug_step()
-            p.configureDebugVisualizer(p.COV_ENABLE_SINGLE_STEP_RENDERING)
+            p.configureDebugVisualizer(p.COV_ENABLE_SINGLE_step_RENDERING)
         else:
             if render:
                 self.render_frame()
@@ -325,38 +354,38 @@ class PandaDiskPushingEnv(gym.Env):
             [current_end_effector_pos[0] + dx, current_end_effector_pos[1] + dy, current_end_effector_pos[2] + dz])
         return target_pos
 
-    def render_image(self, camera_pos, camera_orn, camera_width, camera_height, nearVal=0.01, distance=0.7):
-        """
-        :param camera_pos:
-        :param camera_orn:
-        :param camera_width:
-        :param camera_height:
-        :return:
-        """
-        view_matrix = p.computeViewMatrixFromYawPitchRoll(cameraTargetPosition=camera_pos,
-                                                          distance=distance,
-                                                          yaw=camera_orn[0],
-                                                          pitch=camera_orn[1],
-                                                          roll=camera_orn[2],
-                                                          upAxisIndex=2)
+    # def render_image(self, camera_pos, camera_orn, camera_width, camera_height, nearVal=0.01, distance=0.7):
+    #     """
+    #     :param camera_pos:
+    #     :param camera_orn:
+    #     :param camera_width:
+    #     :param camera_height:
+    #     :return:
+    #     """
+    #     view_matrix = p.computeViewMatrixFromYawPitchRoll(cameraTargetPosition=camera_pos,
+    #                                                       distance=distance,
+    #                                                       yaw=camera_orn[0],
+    #                                                       pitch=camera_orn[1],
+    #                                                       roll=camera_orn[2],
+    #                                                       upAxisIndex=2)
 
-        proj_matrix = p.computeProjectionMatrixFOV(fov=60,
-                                                   aspect=float(camera_width) / camera_height,
-                                                   nearVal=nearVal,
-                                                   farVal=100.0)
+    #     proj_matrix = p.computeProjectionMatrixFOV(fov=60,
+    #                                                aspect=float(camera_width) / camera_height,
+    #                                                nearVal=nearVal,
+    #                                                farVal=100.0)
 
-        (_, _, px, _, _) = p.getCameraImage(width=camera_width,
-                                            height=camera_height,
-                                            viewMatrix=view_matrix,
-                                            projectionMatrix=proj_matrix,
-                                            renderer=p.ER_BULLET_HARDWARE_OPENGL,
-                                            flags=p.ER_NO_SEGMENTATION_MASK)
+    #     (_, _, px, _, _) = p.getCameraImage(width=camera_width,
+    #                                         height=camera_height,
+    #                                         viewMatrix=view_matrix,
+    #                                         projectionMatrix=proj_matrix,
+    #                                         renderer=p.ER_BULLET_HARDWARE_OPENGL,
+    #                                         flags=p.ER_NO_SEGMENTATION_MASK)
 
-        rgb_array = np.array(px, dtype=np.uint8)
-        rgb_array = np.reshape(rgb_array, (camera_height, camera_width, 4))
-        rgb_array = rgb_array[:, :, :3]
-        rgb_array = np.moveaxis(rgb_array, [0, 1, 2], [1, 2, 0])
-        return rgb_array
+    #     rgb_array = np.array(px, dtype=np.uint8)
+    #     rgb_array = np.reshape(rgb_array, (camera_height, camera_width, 4))
+    #     rgb_array = rgb_array[:, :, :3]
+    #     rgb_array = np.moveaxis(rgb_array, [0, 1, 2], [1, 2, 0])
+    #     return rgb_array
 
     def _debug_step(self):
         """
@@ -364,6 +393,7 @@ class PandaDiskPushingEnv(gym.Env):
         :return:
         """
         # Here we would add text and bounding boxed to the debug simulation
+        print("Debug step")
         p.removeAllUserDebugItems()
 
     def _set_object_positions(self, random_start=False):
@@ -410,15 +440,26 @@ class PandaDiskPushingEnv(gym.Env):
             pass
         elif self.visualizer is not None:
             if self.is_render_on:
-                rgb_img = self.render_image(camera_pos=[0.55, -0.35, 0.2],
-                                            camera_orn=[0, -40, 0],
-                                            camera_width=self.camera_width,
-                                            camera_height=self.camera_height,
-                                            distance=1.5)
-                rgb_img = rgb_img.transpose(1, 2, 0)
-                self.frames.append(rgb_img)
-                if self.visualizer is not None:
-                    self.visualizer.set_data(rgb_img)
+                # rgb_img = self.render_image(camera_pos=[0.55, -0.35, 0.2],
+                #                             camera_orn=[0, -40, 0],
+                #                             camera_width=self.camera_width,
+                #                             camera_height=self.camera_height,
+                #                             distance=1.5)
+                # rgb_img = rgb_img.transpose(1, 2, 0)
+                # self.frames.append(rgb_img)
+                # if self.visualizer is not None:
+                #     self.visualizer.set_data(rgb_img)
+                print("Rendering")
+                print("State: ", self.get_state())
+        else:
+            pass
+
+    def render(self):
+        if self.debug:
+            pass
+        elif self.visualizer is not None:
+            if self.is_render_on:
+                print("Observation Space: ", self.get_state())
         else:
             pass
 
