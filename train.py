@@ -89,7 +89,7 @@ def train(algorithm, iter_num):
     # examine the trained policy
     policy = agent.get_policy()
     model = policy.model
-    print(model.base_model.summary())
+    # print(model.base_model.summary())
 
 
 def test(algorithm, checkpoint_dir):
