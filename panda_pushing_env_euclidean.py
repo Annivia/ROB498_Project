@@ -29,7 +29,7 @@ class PandaDiskPushingEnv_euclidean(gym.Env):
     The orientation does not matter, so the state can be represented in 2D as the [x,y] object position.
     """
 
-    def __init__(self, debug=False, visualizer=None, include_obstacle=False, render_non_push_motions=True,
+    def __init__(self, debug=False, visualizer=None, include_obstacle=True, render_non_push_motions=True,
                  render_every_n_steps=1, camera_heigh=84, camera_width=84, done_at_goal=True):
         self.debug = debug
         self.visualizer = visualizer

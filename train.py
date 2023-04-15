@@ -15,6 +15,7 @@ from panda_pushing_env_square_bar import PandaDiskPushingEnv_square_bar
 import argparse
 import sys
 import datetime
+import re
 
 
 def create_environment_euclidean(env_config):
@@ -35,7 +36,19 @@ def create_environment_square_bar(env_config):
 #         return PandaDiskPushingEnv(testa=str)
 #     return inner_function
 
+def extract_reward(directory):
+    pattern = r"(square_bar|square|euclidean_bar|euclidean)"
+    match = re.search(pattern, directory)
+    if match:
+        return match.group(1)
+    return None
 
+def extract_algorithm(directory):
+    pattern = r"checkpoints\/(DDPG|PPO|SAC)"
+    match = re.search(pattern, directory)
+    if match:
+        return match.group(1)
+    return None
 
 def set_up(algorithm):
 
@@ -129,14 +142,30 @@ def train(algorithm, iter_num, reward):
     # print(model.base_model.summary())
 
 
-def test(algorithm, checkpoint_dir):
+def test(checkpoint_dir):
+    
+    chkpt_file=checkpoint_dir
+    reward_type = extract_reward(checkpoint_dir)
+    algorithm = extract_algorithm(checkpoint_dir)
 
-    config, agent = set_up(algorithm)
-    chkpt_file='tmp/exa/checkpoint_000005'
-    # chkpt_file=checkpoint_dir
+    if (reward_type == 'euclidean'):
+        register_env("PandaDiskPushingEnv", create_environment_euclidean)
+        env = PandaDiskPushingEnv_euclidean(visualizer=None, render_non_push_motions=True,  camera_heigh=800, camera_width=800, render_every_n_steps=1)
+    elif (reward_type == 'euclidean_bar'):
+        register_env("PandaDiskPushingEnv", create_environment_euclidean_bar)
+        env = PandaDiskPushingEnv_euclidean_bar(visualizer=None, render_non_push_motions=True,  camera_heigh=800, camera_width=800, render_every_n_steps=1)
+    elif (reward_type == 'square'):
+        register_env("PandaDiskPushingEnv", create_environment_square)
+        env = PandaDiskPushingEnv_square(visualizer=None, render_non_push_motions=True,  camera_heigh=800, camera_width=800, render_every_n_steps=1)
+    elif (reward_type == 'square_bar'):
+        register_env("PandaDiskPushingEnv", create_environment_square_bar)
+        env = PandaDiskPushingEnv_square_bar(visualizer=None, render_non_push_motions=True,  camera_heigh=800, camera_width=800, render_every_n_steps=1)
+    else:
+        print("Invalid Checkpoint Directory")
+        exit(1)
 
+    agent = set_up(algorithm)
     agent.restore(chkpt_file)
-    env = PandaDiskPushingEnv(visualizer=None, render_non_push_motions=True,  camera_heigh=800, camera_width=800, render_every_n_steps=1)
 
     state = env.reset()
     sum_reward = 0
@@ -183,7 +212,7 @@ if __name__ == "__main__":
         if args.checkpoint_dir is None:
             print("Error: Please provide a checkpoint directory with --checkpoint_dir when running in test mode.")
             sys.exit(1)
-        test(args.algorithm, args.checkpoint_dir)
+        test(args.checkpoint_dir)
 
     else:
         print("Error: Please specify either train or test mode.")
