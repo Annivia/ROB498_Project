@@ -8,14 +8,34 @@ from ray.rllib.algorithms.dqn.dqn import DQN, DQNConfig
 from ray.rllib.algorithms.ddpg.ddpg import DDPG, DDPGConfig
 from ray.rllib.algorithms.sac.sac import SAC, SACConfig
 import shutil
-from panda_pushing_env import PandaDiskPushingEnv
+from panda_pushing_env_euclidean import PandaDiskPushingEnv_euclidean
+from panda_pushing_env_square import PandaDiskPushingEnv_square
+from panda_pushing_env_euclidean_bar import PandaDiskPushingEnv_euclidean_bar
+from panda_pushing_env_square_bar import PandaDiskPushingEnv_square_bar
 import argparse
 import sys
 import datetime
 
 
-def create_environment(env_config):
-    return PandaDiskPushingEnv(**env_config)
+def create_environment_euclidean(env_config):
+    return PandaDiskPushingEnv_euclidean(**env_config)
+
+def create_environment_euclidean_bar(env_config):
+    return PandaDiskPushingEnv_euclidean_bar(**env_config)
+
+def create_environment_square(env_config):
+    return PandaDiskPushingEnv_square(**env_config)
+
+def create_environment_square_bar(env_config):
+    return PandaDiskPushingEnv_square_bar(**env_config)
+
+# def create_environment(str):
+#     def inner_function():
+#         print("Out", str)
+#         return PandaDiskPushingEnv(testa=str)
+#     return inner_function
+
+
 
 def set_up(algorithm):
 
@@ -24,7 +44,7 @@ def set_up(algorithm):
         config = config.resources(num_gpus=1)  
         config = config.rollouts(num_rollout_workers=2) 
         config = config.framework('torch')
-        agent = PPO(config, env=PandaDiskPushingEnv)
+        agent = PPO(config, env='PandaDiskPushingEnv')
 
     # if algorithm == "PPO":
     #     config = ppo.DEFAULT_CONFIG.copy()
@@ -40,26 +60,26 @@ def set_up(algorithm):
         config = config.resources(num_gpus=1)  
         config = config.rollouts(num_rollout_workers=2) 
         config = config.framework('torch')
-        agent = DDPG(config, env=PandaDiskPushingEnv)
+        agent = DDPG(config, env='PandaDiskPushingEnv')
 
     elif algorithm == "SAC":
         config = SACConfig().training(gamma=0.9, lr=0.01, tau=0.005)
         config = config.resources(num_gpus=1)  
         config = config.rollouts(num_rollout_workers=2) 
         config = config.framework('torch')
-        agent = SAC(config, env=PandaDiskPushingEnv)
+        agent = SAC(config, env='PandaDiskPushingEnv')
 
     else:
         raise ValueError(f"Unsupported algorithm: {algorithm}")
     return agent
 
 
-def train(algorithm, iter_num):
+def train(algorithm, iter_num, reward):
 
     # init directory in which to save checkpoints
     now = datetime.datetime.now()
     date_time_str = now.strftime("%m-%d_%H-%M")
-    chkpt_root = "checkpoints/" + algorithm + '_' + date_time_str
+    chkpt_root = "checkpoints/" + algorithm + '_' + reward + "_" + date_time_str
 
     # # Create the directory
     # os.makedirs(dir_name)
@@ -74,10 +94,17 @@ def train(algorithm, iter_num):
     ray.init(ignore_reinit_error=True)
 
     # register the custom environment
-    register_env("PandaDiskPushingEnv", create_environment)
+    if reward == 'euclidean':
+        register_env("PandaDiskPushingEnv", create_environment_euclidean)
+    elif reward == 'square':
+        register_env("PandaDiskPushingEnv", create_environment_square)
+    elif reward == 'euclidean_bar':
+        register_env("PandaDiskPushingEnv", create_environment_euclidean_bar)
+    elif reward == 'square_bar':
+        register_env("PandaDiskPushingEnv", create_environment_square_bar)
 
     # configure the environment and create agent
-    config, agent = set_up(algorithm)
+    agent = set_up(algorithm)
 
     status = "{:2d} reward {:6.2f}/{:6.2f}/{:6.2f} len {:4.2f} saved {}"
 
@@ -138,6 +165,7 @@ if __name__ == "__main__":
     parser.add_argument("--train", action="store_true")
     parser.add_argument("--test", action="store_true")
     parser.add_argument("--checkpoint_dir", type=str)
+    parser.add_argument("--reward", type=str)
 
     args = parser.parse_args()
     print("Algorithm: ", args.algorithm)
@@ -148,7 +176,7 @@ if __name__ == "__main__":
 
     if args.train:
         print("Running in train mode...")
-        train(args.algorithm, args.iter_num)
+        train(args.algorithm, args.iter_num, args.reward)
 
     elif args.test:
         print("Running in test mode...")
