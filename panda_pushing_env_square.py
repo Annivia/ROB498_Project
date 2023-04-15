@@ -23,7 +23,7 @@ OBSTACLE_RADIUS = 0.05
 OBSTACLE_CENTRE = np.array([0.575, -0.05])
 
 
-class PandaDiskPushingEnv_euclidean(gym.Env):
+class PandaDiskPushingEnv_square(gym.Env):
     """
     Pushing setup with disk object
     The orientation does not matter, so the state can be represented in 2D as the [x,y] object position.
@@ -45,7 +45,7 @@ class PandaDiskPushingEnv_euclidean(gym.Env):
         self.episode_step_counter = 0
         self.episode_counter = 0
         self.frames = []
-        print("Called: Reward: Euclidean")
+        print("Called: Reward: Square")
 
         self.pandaUid = None  # panda robot arm
         self.tableUid = None  # Table where to push
@@ -150,7 +150,7 @@ class PandaDiskPushingEnv_euclidean(gym.Env):
     
     def _reward(self, state):
 
-        ## Euclidean
+        ## Square
         out_penalty = 0
         collision_penalty = 0
         succeed = 0
@@ -163,9 +163,8 @@ class PandaDiskPushingEnv_euclidean(gym.Env):
         
         if distance_to_obstacle < OBSTACLE_RADIUS:
             collision_penalty = -10
-        reward = 10 - distance_to_target*10 + collision_penalty + out_penalty + succeed
+        reward = 10 - np.log(distance_to_target)*10  + collision_penalty + out_penalty + succeed
         return reward
-    
 
     def step(self, action):
         # check that the action is valid
