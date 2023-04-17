@@ -157,7 +157,7 @@ class PandaDiskPushingEnv_square(gym.Env):
         if np.any(state < self.observation_space.low) or np.any(state > self.observation_space.high):
             out_penalty = -10
         if self._is_done(state):
-            succeed = 20
+            succeed = 200
         distance_to_target = np.linalg.norm(TARGET_POSE_OBSTACLES - state)
         distance_to_obstacle = np.linalg.norm(OBSTACLE_CENTRE - state)
         
@@ -193,7 +193,7 @@ class PandaDiskPushingEnv_square(gym.Env):
         if np.any(state < self.observation_space.low) or np.any(state > self.observation_space.high):
             # print("Observation Space: ", state, " Push out of space")
             state = np.clip(state, a_min=self.observation_space.low, a_max=self.observation_space.high)
-            reward = -100
+            reward = -50
             done = True
             info = {}
             return state, reward, done, info

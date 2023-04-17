@@ -16,6 +16,8 @@ import argparse
 import sys
 import datetime
 import re
+import csv
+import pandas as pd
 
 
 def create_environment_euclidean(env_config):
@@ -44,7 +46,7 @@ def extract_reward(directory):
     return None
 
 def extract_algorithm(directory):
-    pattern = r"checkpoints/cluttered\/(DDPG|PPO|SAC)"
+    pattern = r"(DDPG|PPO|SAC)"
     match = re.search(pattern, directory)
     if match:
         return match.group(1)
@@ -97,7 +99,7 @@ def train(algorithm, iter_num, reward):
     chkpt_root = "checkpoints/" + name + '/' + algorithm + '_' + reward + "_" + date_time_str
 
     # # Create the directory
-    # os.makedirs(dir_name)
+    # os.makedirs(chkpt_root)
     # chkpt_root = "tmp/exa"
     shutil.rmtree(chkpt_root, ignore_errors=True, onerror=None)
 
@@ -123,6 +125,8 @@ def train(algorithm, iter_num, reward):
 
     status = "{:2d} reward {:6.2f}/{:6.2f}/{:6.2f} len {:4.2f} saved {}"
 
+    results_df = pd.DataFrame(columns=["Iteration", "Reward Min", "Reward Mean", "Reward Max", "Episode Length Mean"])
+
     # train a policy with RLlib using PPO
     for n in range(iter_num):
         result = agent.train()
@@ -136,6 +140,19 @@ def train(algorithm, iter_num, reward):
                 result["episode_len_mean"],
                 chkpt_file
                 ))
+
+        # Add results to DataFrame
+        results_df = results_df.append({
+            "Iteration": n + 1,
+            "Reward Min": result["episode_reward_min"],
+            "Reward Mean": result["episode_reward_mean"],
+            "Reward Max": result["episode_reward_max"],
+            "Episode Length Mean": result["episode_len_mean"]
+        }, ignore_index=True)
+
+    # Save DataFrame as CSV
+    csv_file_path = os.path.join(chkpt_root, 'results.csv')
+    results_df.to_csv(csv_file_path, index=False)
 
 
     # examine the trained policy
