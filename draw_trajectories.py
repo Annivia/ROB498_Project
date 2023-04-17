@@ -2,6 +2,9 @@ import json
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.patches as patches
+import argparse
+from helper import *
+import os
 
 def draw_trajectory(file_name):
     with open(file_name, "r") as f:
@@ -30,8 +33,15 @@ def draw_trajectory(file_name):
     ax.set_aspect('equal')
     ax.legend()
 
-    plt.savefig("trajectory_diagram.png", dpi=300)
+    reward = extract_reward(file_name)
+    algo = extract_algorithm(file_name)
+    save_name = os.path.join('..', 'figures', algo+'_'+reward+'.png')
+
+    plt.savefig(save_name, dpi=300)
 
 if __name__ == '__main__':
-    draw_trajectory("results.json")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dir", type=str)
+    args = parser.parse_args()
+    draw_trajectory(args.dir)
 

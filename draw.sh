@@ -9,5 +9,5 @@ cd checkpoints
 
 find . -mindepth 1 -maxdepth 1 -type d | while read -r dir; do
     # Echo the directory name of the subsubfolder
-    echo $(realpath "$dir/results.json")
+    python ../draw_trajectories.py --dir=$(realpath "$dir/results.json")
 done
