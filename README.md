@@ -17,10 +17,3 @@ Why is it using DISK_RADIUS?
 
 Visualize 
 
-(RolloutWorker pid=591114) 6
-(RolloutWorker pid=591114) get_state start
-(RolloutWorker pid=591114) get_object_pos_planar start
-(RolloutWorker pid=591114) get_object_pose start
-(RolloutWorker pid=591114) get_object_pose end
-(RolloutWorker pid=591114) get_object_pos_planar start
-(RolloutWorker pid=591114) get_state end
