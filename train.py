@@ -44,7 +44,7 @@ def extract_reward(directory):
     return None
 
 def extract_algorithm(directory):
-    pattern = r"checkpoints\/(DDPG|PPO|SAC)"
+    pattern = r"checkpoints/cluttered\/(DDPG|PPO|SAC)"
     match = re.search(pattern, directory)
     if match:
         return match.group(1)
@@ -89,10 +89,12 @@ def set_up(algorithm):
 
 def train(algorithm, iter_num, reward):
 
+    name = 'TrainA'
+
     # init directory in which to save checkpoints
     now = datetime.datetime.now()
     date_time_str = now.strftime("%m-%d_%H-%M")
-    chkpt_root = "checkpoints/" + algorithm + '_' + reward + "_" + date_time_str
+    chkpt_root = "checkpoints/" + name + '/' + algorithm + '_' + reward + "_" + date_time_str
 
     # # Create the directory
     # os.makedirs(dir_name)
@@ -169,19 +171,20 @@ def test(checkpoint_dir):
 
     state = env.reset()
     sum_reward = 0
-    n_step = 20
+    n_step = 40
 
     for step in range(n_step):
         action = agent.compute_single_action(state)
         state, reward, done, info = env.step(action)
-        print(state)
+        print("State: ", state, " | Reward: ", reward)
         sum_reward += reward
 
         env.render()
 
         if done == 1:
             # report at the end of each episode
-            print("cumulative reward", sum_reward)
+            # print("cumulative reward", sum_reward)
+            print("Goal Reached with reward = ", reward)
             state = env.reset()
             sum_reward = 0
 

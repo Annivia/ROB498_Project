@@ -161,7 +161,7 @@ class PandaDiskPushingEnv_euclidean_bar(gym.Env):
 
         if np.any(state < self.observation_space.low) or np.any(state > self.observation_space.high):
             out_penalty = -10
-        if np.all(state == TARGET_POSE_OBSTACLES):
+        if self._is_done(state):
             succeed =  20
         distance_to_target = np.linalg.norm(TARGET_POSE_OBSTACLES - state)
         distance_to_obstacle = np.linalg.norm(OBSTACLE_CENTRE - state)

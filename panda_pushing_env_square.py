@@ -156,14 +156,14 @@ class PandaDiskPushingEnv_square(gym.Env):
         succeed = 0
         if np.any(state < self.observation_space.low) or np.any(state > self.observation_space.high):
             out_penalty = -10
-        if np.all(state == TARGET_POSE_OBSTACLES):
+        if self._is_done(state):
             succeed = 20
         distance_to_target = np.linalg.norm(TARGET_POSE_OBSTACLES - state)
         distance_to_obstacle = np.linalg.norm(OBSTACLE_CENTRE - state)
         
         if distance_to_obstacle < OBSTACLE_RADIUS:
             collision_penalty = -10
-        reward = 10 - np.log(distance_to_target)*10  + collision_penalty + out_penalty + succeed
+        reward = - np.log(distance_to_target)*10  + collision_penalty + out_penalty + succeed
         return reward
 
     def step(self, action):
