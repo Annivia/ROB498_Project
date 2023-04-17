@@ -156,7 +156,8 @@ class PandaDiskPushingEnv_square_bar(gym.Env):
         collision_penalty = 0
         obstacle_bar = 0
         target_bar = 0
-        BAR_RADIUS = 0.1
+        wall_bar = 0
+        BAR_RADIUS = 0.05
         succeed = 0
 
         if np.any(state < self.observation_space.low) or np.any(state > self.observation_space.high):
@@ -165,14 +166,22 @@ class PandaDiskPushingEnv_square_bar(gym.Env):
             succeed = 20
         distance_to_target = np.linalg.norm(TARGET_POSE_OBSTACLES - state)
         distance_to_obstacle = np.linalg.norm(OBSTACLE_CENTRE - state)
-        
+        distance_to_wall = np.array([
+            state[0] - self.observation_space.low[0],
+            state[1] - self.observation_space.low[1],
+            - state[0] + self.observation_space.high[0],
+            - state[1] + self.observation_space.high[1]
+        ]).min()
+
         if distance_to_obstacle < OBSTACLE_RADIUS:
             collision_penalty = -10
         if distance_to_obstacle < BAR_RADIUS:
             obstacle_bar = - BAR_RADIUS + distance_to_obstacle
-        if distance_to_target < BAR_RADIUS:
+        if distance_to_target < BAR_RADIUS + 1.2*DISK_RADIUS:
             target_bar = BAR_RADIUS - distance_to_target
-        reward = - np.log(distance_to_target)*10 + collision_penalty + out_penalty + obstacle_bar*10 + target_bar*20 + succeed
+        if distance_to_wall < BAR_RADIUS and distance_to_wall > 0:
+            wall_bar = -distance_to_wall
+        reward = - np.log(distance_to_target)*10 + collision_penalty + out_penalty + obstacle_bar*50 + target_bar*100 + succeed + wall_bar * 100
         return reward
 
     def step(self, action):
