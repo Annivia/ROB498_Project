@@ -7,8 +7,7 @@ cd checkpoints
 # -type d specifies that we are looking for directories
 # -regex is used to match the required pattern
 
-find . -mindepth 2 -maxdepth 2 -type d | while read -r dir; do
+find . -mindepth 1 -maxdepth 1 -type d | while read -r dir; do
     # Echo the directory name of the subsubfolder
-    python ../train.py --test --checkpoint_dir=$(realpath "$dir")
+    echo $(realpath "$dir/results.json")
 done
-

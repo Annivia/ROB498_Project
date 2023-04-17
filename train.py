@@ -15,9 +15,9 @@ from panda_pushing_env_square_bar import PandaDiskPushingEnv_square_bar
 import argparse
 import sys
 import datetime
-import re
-import csv
+from helper import *
 import pandas as pd
+import json
 
 
 def create_environment_euclidean(env_config):
@@ -32,25 +32,6 @@ def create_environment_square(env_config):
 def create_environment_square_bar(env_config):
     return PandaDiskPushingEnv_square_bar(**env_config)
 
-# def create_environment(str):
-#     def inner_function():
-#         print("Out", str)
-#         return PandaDiskPushingEnv(testa=str)
-#     return inner_function
-
-def extract_reward(directory):
-    pattern = r"(square_bar|square|euclidean_bar|euclidean)"
-    match = re.search(pattern, directory)
-    if match:
-        return match.group(1)
-    return None
-
-def extract_algorithm(directory):
-    pattern = r"(DDPG|PPO|SAC)"
-    match = re.search(pattern, directory)
-    if match:
-        return match.group(1)
-    return None
 
 def set_up(algorithm):
 
@@ -73,14 +54,14 @@ def set_up(algorithm):
     elif algorithm == "DDPG":
         config = DDPGConfig()
         config = config.resources(num_gpus=1)  
-        config = config.rollouts(num_rollout_workers=2) 
+        config = config.rollouts(num_rollout_workers=2)
         config = config.framework('torch')
         agent = DDPG(config, env='PandaDiskPushingEnv')
 
     elif algorithm == "SAC":
         config = SACConfig().training(gamma=0.9, lr=0.01, tau=0.005)
-        config = config.resources(num_gpus=1)  
-        config = config.rollouts(num_rollout_workers=2) 
+        config = config.resources(num_gpus=1)
+        config = config.rollouts(num_rollout_workers=2)
         config = config.framework('torch')
         agent = SAC(config, env='PandaDiskPushingEnv')
 
@@ -91,12 +72,10 @@ def set_up(algorithm):
 
 def train(algorithm, iter_num, reward):
 
-    name = 'TrainA'
-
     # init directory in which to save checkpoints
     now = datetime.datetime.now()
     date_time_str = now.strftime("%m-%d_%H-%M")
-    chkpt_root = "checkpoints/" + name + '/' + algorithm + '_' + reward + "_" + date_time_str
+    chkpt_root = "checkpoints/" + algorithm + '_' + reward + "_" + date_time_str
 
     # # Create the directory
     # os.makedirs(chkpt_root)
@@ -151,7 +130,7 @@ def train(algorithm, iter_num, reward):
         }, ignore_index=True)
 
     # Save DataFrame as CSV
-    csv_file_path = os.path.join(chkpt_root, 'results.csv')
+    csv_file_path = os.path.join(chkpt_root, 'train_results.csv')
     results_df.to_csv(csv_file_path, index=False)
 
 
@@ -166,6 +145,8 @@ def test(checkpoint_dir):
     chkpt_file=checkpoint_dir
     reward_type = extract_reward(checkpoint_dir)
     algorithm = extract_algorithm(checkpoint_dir)
+    state_log = []
+    reward_log = []
 
     if (reward_type == 'euclidean'):
         register_env("PandaDiskPushingEnv", create_environment_euclidean)
@@ -193,6 +174,8 @@ def test(checkpoint_dir):
     for step in range(n_step):
         action = agent.compute_single_action(state)
         state, reward, done, info = env.step(action)
+        state_log.append(state)
+        reward_log.append(reward)
         print("State: ", state, " | Reward: ", reward)
         sum_reward += reward
 
@@ -204,6 +187,9 @@ def test(checkpoint_dir):
             print("Goal Reached with reward = ", reward)
             state = env.reset()
             sum_reward = 0
+            break
+
+    return state_log, reward_log
 
 
 if __name__ == "__main__":
@@ -232,7 +218,43 @@ if __name__ == "__main__":
         if args.checkpoint_dir is None:
             print("Error: Please provide a checkpoint directory with --checkpoint_dir when running in test mode.")
             sys.exit(1)
-        test(args.checkpoint_dir)
+
+        results = []
+
+        for _ in range(1):
+            states, rewards = test(args.checkpoint_dir)
+            checkpoint_number = extract_checkpoint_id(args.checkpoint_dir)
+
+            if checkpoint_number is not None:
+                states_list = [state.tolist() for state in states]
+                rewards_list = rewards
+                result = {"checkpoint": checkpoint_number, "state": states_list, "reward": rewards_list}
+                results.append(result)
+
+        # Save the results in a JSON file in the parent folder of checkpoint_dir
+        parent_folder = os.path.dirname(os.path.abspath(args.checkpoint_dir))
+        results_file = os.path.join(parent_folder, "results.json")
+        print("Writing into ", results_file)
+
+        # with open(results_file, "w") as f:
+        #     json.dump(results, f)
+
+        # Check if the JSON file exists
+        if os.path.isfile(results_file):
+            # If it exists, read the content into a list
+            with open(results_file, "r") as f:
+                existing_results = json.load(f)
+        else:
+            # If it doesn't exist, initialize an empty list
+            existing_results = []
+
+        # Append the new results to the existing results
+        existing_results.extend(results)
+
+        # Write the updated content back to the JSON file
+        with open(results_file, "w") as f:
+            json.dump(existing_results, f)
+
 
     else:
         print("Error: Please specify either train or test mode.")
