@@ -111,14 +111,14 @@ def train(algorithm, iter_num, reward):
         result = agent.train()
         chkpt_file = agent.save(chkpt_root)
 
-        print(status.format(
-                n + 1,
-                result["episode_reward_min"],
-                result["episode_reward_mean"],
-                result["episode_reward_max"],
-                result["episode_len_mean"],
-                chkpt_file
-                ))
+        # print(status.format(
+        #         n + 1,
+        #         result["episode_reward_min"],
+        #         result["episode_reward_mean"],
+        #         result["episode_reward_max"],
+        #         result["episode_len_mean"],
+        #         chkpt_file
+        #         ))
 
         # Add results to DataFrame
         results_df = results_df.append({
@@ -176,7 +176,7 @@ def test(checkpoint_dir):
         state, reward, done, info = env.step(action)
         state_log.append(state)
         reward_log.append(reward)
-        print("State: ", state, " | Reward: ", reward)
+        # print("State: ", state, " | Reward: ", reward)
         sum_reward += reward
 
         env.render()
@@ -184,7 +184,7 @@ def test(checkpoint_dir):
         if done == 1:
             # report at the end of each episode
             # print("cumulative reward", sum_reward)
-            print("Goal Reached with reward = ", reward)
+            # print("Goal Reached with reward = ", reward)
             state = env.reset()
             sum_reward = 0
             break
@@ -234,7 +234,7 @@ if __name__ == "__main__":
         # Save the results in a JSON file in the parent folder of checkpoint_dir
         parent_folder = os.path.dirname(os.path.abspath(args.checkpoint_dir))
         results_file = os.path.join(parent_folder, "results.json")
-        print("Writing into ", results_file)
+        # print("Writing into ", results_file)
 
         # with open(results_file, "w") as f:
         #     json.dump(results, f)

@@ -1,0 +1,11 @@
+{
+    "BAR_RADIUS": 0.05,
+    "succeed_reward": 200,
+    "out_penalty": -10,
+    "collision_penalty": -10,
+    "distance_scale_factor": 10,
+    "obstacle_bar_factor": 50,
+    "target_bar_factor": 100,
+    "wall_bar_factor": 100
+  }
+  

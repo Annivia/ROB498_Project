@@ -9,6 +9,7 @@ import math
 import numpy as np
 from tqdm import tqdm
 import argparse
+import json
 
 # get the path to assets
 # hw_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)).split('/HW3')[0], 'HW3')
@@ -103,6 +104,9 @@ class PandaDiskPushingEnv_euclidean_bar(gym.Env):
                                                 1]]))  # TODO: Get observation space -- maybe a tuple of (top_img, block_position)
         self.action_space = spaces.Box(low=np.array([-0.25, -np.pi * 0.25, 0], dtype=np.float32),
                                        high=np.array([0.25, np.pi * 0.25, 1], dtype=np.float32))  #
+        
+        with open("config.json", "r") as f:
+            self.config = json.load(f)
 
     def reset(self, random_start=False):
         self._set_object_positions(random_start=random_start)
@@ -147,6 +151,7 @@ class PandaDiskPushingEnv_euclidean_bar(gym.Env):
         # get inital state after reset
         state = self.get_state()
         return state
+
     
     def _reward(self, state):
 
@@ -157,13 +162,13 @@ class PandaDiskPushingEnv_euclidean_bar(gym.Env):
         obstacle_bar = 0
         target_bar = 0
         wall_bar = 0
-        BAR_RADIUS = 0.05
+        BAR_RADIUS = self.config["BAR_RADIUS"]
         succeed = 0
 
         if np.any(state < self.observation_space.low) or np.any(state > self.observation_space.high):
-            out_penalty = -10
+            out_penalty = self.config["out_penalty"]
         if self._is_done(state):
-            succeed =  200
+            succeed =  self.config["succeed_reward"]
         distance_to_target = np.linalg.norm(TARGET_POSE_OBSTACLES - state)
         distance_to_obstacle = np.linalg.norm(OBSTACLE_CENTRE - state)
         distance_to_wall = np.array([
@@ -174,14 +179,20 @@ class PandaDiskPushingEnv_euclidean_bar(gym.Env):
         ]).min()
         
         if distance_to_obstacle < OBSTACLE_RADIUS:
-            collision_penalty = -10
+            collision_penalty = self.config["collision_penalty"]
         if distance_to_obstacle < BAR_RADIUS:
             obstacle_bar = - BAR_RADIUS + distance_to_obstacle
         if distance_to_target < BAR_RADIUS + 1.2*DISK_RADIUS:
             target_bar = BAR_RADIUS - distance_to_target
         if distance_to_wall < BAR_RADIUS and distance_to_wall > 0:
             wall_bar = -distance_to_wall
-        reward = 10 - distance_to_target*10 + collision_penalty + out_penalty + obstacle_bar*50 + target_bar*100 + succeed + wall_bar * 100
+
+        reward = (10 + succeed + collision_penalty + out_penalty 
+        - distance_to_target*self.config["distance_scale_factor"] 
+        + obstacle_bar*self.config["obstacle_bar_factor"] 
+        + target_bar*self.config["target_bar_factor"]
+        + wall_bar*self.config["wall_bar_factor"])
+
         return reward
 
     def step(self, action):
@@ -516,7 +527,7 @@ if __name__ == '__main__':
     parser.add_argument('--obstacle', action='store_true')
     script_args, _ = parser.parse_known_args()
 
-    env = PandaDiskPushingEnv(debug=script_args.debug, include_obstacle=script_args.obstacle)
+    env = PandaDiskPushingEnv_euclidean_bar(debug=script_args.debug, include_obstacle=script_args.obstacle)
     env.reset()
 
     for i in tqdm(range(1000)):

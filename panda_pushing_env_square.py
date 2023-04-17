@@ -9,6 +9,7 @@ import math
 import numpy as np
 from tqdm import tqdm
 import argparse
+import json
 
 # get the path to assets
 # hw_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)).split('/HW3')[0], 'HW3')
@@ -103,6 +104,8 @@ class PandaDiskPushingEnv_square(gym.Env):
                                                 1]]))  # TODO: Get observation space -- maybe a tuple of (top_img, block_position)
         self.action_space = spaces.Box(low=np.array([-0.25, -np.pi * 0.25, 0], dtype=np.float32),
                                        high=np.array([0.25, np.pi * 0.25, 1], dtype=np.float32))  #
+        with open("config.json", "r") as f:
+            self.config = json.load(f)
 
     def reset(self, random_start=False):
         self._set_object_positions(random_start=random_start)
@@ -155,15 +158,18 @@ class PandaDiskPushingEnv_square(gym.Env):
         collision_penalty = 0
         succeed = 0
         if np.any(state < self.observation_space.low) or np.any(state > self.observation_space.high):
-            out_penalty = -10
+            out_penalty = self.config["out_penalty"]
         if self._is_done(state):
-            succeed = 200
+            succeed = self.config["succeed_reward"]
         distance_to_target = np.linalg.norm(TARGET_POSE_OBSTACLES - state)
         distance_to_obstacle = np.linalg.norm(OBSTACLE_CENTRE - state)
         
         if distance_to_obstacle < OBSTACLE_RADIUS:
-            collision_penalty = -10
-        reward = - np.log(distance_to_target)*10  + collision_penalty + out_penalty + succeed
+            collision_penalty = self.config["collision_penalty"]
+
+        reward = (collision_penalty + out_penalty + succeed
+        - np.log(distance_to_target)*self.config["distance_scale_factor"])
+
         return reward
 
     def step(self, action):
@@ -498,7 +504,7 @@ if __name__ == '__main__':
     parser.add_argument('--obstacle', action='store_true')
     script_args, _ = parser.parse_known_args()
 
-    env = PandaDiskPushingEnv(debug=script_args.debug, include_obstacle=script_args.obstacle)
+    env = PandaDiskPushingEnv_square(debug=script_args.debug, include_obstacle=script_args.obstacle)
     env.reset()
 
     for i in tqdm(range(1000)):
