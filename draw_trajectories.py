@@ -35,7 +35,7 @@ def draw_trajectory(file_name):
 
     reward = extract_reward(file_name)
     algo = extract_algorithm(file_name)
-    save_name = os.path.join('..', 'figures', algo+'_'+reward+'.png')
+    save_name = os.path.join('figures', algo+'_'+reward+'.png')
 
     plt.savefig(save_name, dpi=300)
 

@@ -6,6 +6,6 @@
     "distance_scale_factor": 10,
     "obstacle_bar_factor": 50,
     "target_bar_factor": 1000,
-    "wall_bar_factor": 100
+    "wall_bar_factor": 200
   }
   
