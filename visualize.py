@@ -63,22 +63,22 @@ def set_up(algorithm):
 
 if __name__ == "__main__":
     
-    checkpoint_dir='/home/pony/Documents/Umich/ROB498/Final_Project/codes/checkpoints/PPO_euclidean_04-18_01-24/checkpoint_000014'
+    checkpoint_dir='/home/pony/Documents/Umich/ROB498/Final_Project/codes/checkpoints/PPO_square_bar_04-18_07-50/checkpoint_000005'
     reward_type = extract_reward(checkpoint_dir)
     algorithm = extract_algorithm(checkpoint_dir)
 
     if (reward_type == 'euclidean'):
         register_env("PandaDiskPushingEnv", create_environment_euclidean)
-        env = PandaDiskPushingEnv_euclidean(visualizer=None, render_non_push_motions=True,  camera_heigh=800, camera_width=800, render_every_n_steps=1)
+        env = PandaDiskPushingEnv_euclidean(visualizer=True, render_non_push_motions=True,  camera_heigh=800, camera_width=800, render_every_n_steps=5)
     elif (reward_type == 'euclidean_bar'):
         register_env("PandaDiskPushingEnv", create_environment_euclidean_bar)
-        env = PandaDiskPushingEnv_euclidean_bar(visualizer=None, render_non_push_motions=True,  camera_heigh=800, camera_width=800, render_every_n_steps=1)
+        env = PandaDiskPushingEnv_euclidean_bar(visualizer=True, render_non_push_motions=True,  camera_heigh=800, camera_width=800, render_every_n_steps=5)
     elif (reward_type == 'square'):
         register_env("PandaDiskPushingEnv", create_environment_square)
-        env = PandaDiskPushingEnv_square(visualizer=None, render_non_push_motions=True,  camera_heigh=800, camera_width=800, render_every_n_steps=1)
+        env = PandaDiskPushingEnv_square(visualizer=True, render_non_push_motions=True,  camera_heigh=800, camera_width=800, render_every_n_steps=5)
     elif (reward_type == 'square_bar'):
         register_env("PandaDiskPushingEnv", create_environment_square_bar)
-        env = PandaDiskPushingEnv_square_bar(visualizer=None, render_non_push_motions=True,  camera_heigh=800, camera_width=800, render_every_n_steps=1)
+        env = PandaDiskPushingEnv_square_bar(visualizer=True, render_non_push_motions=True,  camera_heigh=800, camera_width=800, render_every_n_steps=5)
     else:
         print("Invalid Checkpoint Directory")
         exit(1)
@@ -96,7 +96,7 @@ if __name__ == "__main__":
         print("State: ", state, " | Reward: ", reward)
         sum_reward += reward
 
-        env.render()
+        # env.render()
 
         if done == 1:
             # report at the end of each episode
