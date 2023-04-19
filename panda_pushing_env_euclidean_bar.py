@@ -160,7 +160,7 @@ class PandaDiskPushingEnv_euclidean_bar(gym.Env):
         ## Add marginal reward to help the agent get out of restricted regions
         out_penalty = 0
         collision_penalty = 0
-        # obstacle_bar = 0
+        obstacle_bar = 0
         target_bar = 0
         wall_bar = 0
         BAR_RADIUS = self.config["BAR_RADIUS"]
@@ -179,10 +179,10 @@ class PandaDiskPushingEnv_euclidean_bar(gym.Env):
             - state[1] + self.observation_space.high[1]
         ]).min()
         
-        if distance_to_obstacle < OBSTACLE_RADIUS:
+        if distance_to_obstacle < OBSTACLE_RADIUS + self.config["COLLISION_RANGE"]:
             collision_penalty = self.config["collision_penalty"]
-        # if distance_to_obstacle < BAR_RADIUS:
-        #     obstacle_bar = - BAR_RADIUS + distance_to_obstacle
+        if distance_to_obstacle < OBSTACLE_RADIUS + BAR_RADIUS:
+            obstacle_bar = - OBSTACLE_RADIUS - BAR_RADIUS + distance_to_obstacle
         if distance_to_target < BAR_RADIUS + 1.2*DISK_RADIUS:
             target_bar = BAR_RADIUS + 1.2*DISK_RADIUS - distance_to_target
         if distance_to_wall < BAR_RADIUS and distance_to_wall > 0:
@@ -190,7 +190,7 @@ class PandaDiskPushingEnv_euclidean_bar(gym.Env):
 
         reward = (10 + succeed + collision_penalty + out_penalty 
         - distance_to_target*self.config["distance_scale_factor"] 
-        # + obstacle_bar*self.config["obstacle_bar_factor"] 
+        + obstacle_bar*self.config["obstacle_bar_factor"] 
         + target_bar*self.config["target_bar_factor"]
         + wall_bar*self.config["wall_bar_factor"])
 

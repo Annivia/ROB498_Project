@@ -1,11 +1,17 @@
 {
-    "BAR_RADIUS": 0.05,
-    "succeed_reward": 200,
-    "out_penalty": -10,
-    "collision_penalty": -10,
-    "distance_scale_factor": 10,
-    "obstacle_bar_factor": 50,
-    "target_bar_factor": 1000,
-    "wall_bar_factor": 200
-  }
+  "TARGET_POSE_FREE": [0.75, 0.1],
+  "TARGET_POSE_OBSTACLES": [0.75, -0.1],
+  "OBSTACLE_RADIUS": 0.05,
+  "OBSTACLE_CENTRE": [0.575, -0.05],
+  "DISK_RADIUS": 0.05,
+  "BAR_RADIUS": 0.05,
+  "COLLISION_RANGE": 0.02,
+  "succeed_reward": 200,
+  "out_penalty": -10,
+  "collision_penalty": -10,
+  "distance_scale_factor": 10,
+  "obstacle_bar_factor": 80,
+  "target_bar_factor": 1000,
+  "wall_bar_factor": 200
+}
   

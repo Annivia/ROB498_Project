@@ -166,7 +166,7 @@ class PandaDiskPushingEnv_euclidean(gym.Env):
         distance_to_target = np.linalg.norm(TARGET_POSE_OBSTACLES - state)
         distance_to_obstacle = np.linalg.norm(OBSTACLE_CENTRE - state)
         
-        if distance_to_obstacle < OBSTACLE_RADIUS:
+        if distance_to_obstacle < OBSTACLE_RADIUS + self.config["COLLISION_RANGE"]:
             collision_penalty = self.config["collision_penalty"]
 
         reward = (10 + collision_penalty + out_penalty + succeed

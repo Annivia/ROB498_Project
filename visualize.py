@@ -63,7 +63,7 @@ def set_up(algorithm):
 
 if __name__ == "__main__":
     
-    checkpoint_dir='/home/pony/Documents/Umich/ROB498/Final_Project/codes/checkpoints/PPO_square_bar_04-18_07-50/checkpoint_000005'
+    checkpoint_dir='/home/pony/Documents/Umich/ROB498/Final_Project/codes/checkpoints/PPO_euclidean_04-18_01-24/checkpoint_000006'
     reward_type = extract_reward(checkpoint_dir)
     algorithm = extract_algorithm(checkpoint_dir)
 
