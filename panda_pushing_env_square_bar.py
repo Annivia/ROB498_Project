@@ -178,14 +178,14 @@ class PandaDiskPushingEnv_square_bar(gym.Env):
             - state[1] + self.observation_space.high[1]
         ]).min()
 
-        if distance_to_obstacle < OBSTACLE_RADIUS + self.config["COLLISION_RANGE"]:
+        if distance_to_obstacle < OBSTACLE_RADIUS + DISK_RADIUS + self.config["COLLISION_RANGE"]:
             collision_penalty = self.config["collision_penalty"]
-        if distance_to_obstacle < OBSTACLE_RADIUS + BAR_RADIUS:
-            obstacle_bar = - OBSTACLE_RADIUS - BAR_RADIUS + distance_to_obstacle
+        if distance_to_obstacle < OBSTACLE_RADIUS + DISK_RADIUS + BAR_RADIUS:
+            obstacle_bar = - OBSTACLE_RADIUS - BAR_RADIUS - DISK_RADIUS + distance_to_obstacle
         if distance_to_target < BAR_RADIUS + 1.2*DISK_RADIUS:
             target_bar = BAR_RADIUS + 1.2*DISK_RADIUS - distance_to_target
         if distance_to_wall < BAR_RADIUS and distance_to_wall > 0:
-            wall_bar = -distance_to_wall
+            wall_bar = distance_to_wall - BAR_RADIUS
 
         reward = (collision_penalty + out_penalty + succeed 
         - np.log(distance_to_target)*self.config["distance_scale_factor"] 
