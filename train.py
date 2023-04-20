@@ -179,7 +179,7 @@ def test(checkpoint_dir):
         # print("State: ", state, " | Reward: ", reward)
         sum_reward += reward
 
-        env.render()
+        # env.render()
 
         if done == 1:
             # report at the end of each episode
