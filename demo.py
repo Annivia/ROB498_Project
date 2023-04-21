@@ -62,6 +62,10 @@ def set_up(algorithm):
 
 
 if __name__ == "__main__":
+
+    print("")
+    print("This script should finish within 1 min.")
+    print("")
     
     checkpoint_dir='checkpoints/Without_Obstacle_Penalty/PPO_euclidean_04-18_23-36/checkpoint_000012'
     reward_type = extract_reward(checkpoint_dir)
