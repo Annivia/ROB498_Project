@@ -8,10 +8,10 @@
   "COLLISION_RANGE": 0.02,
   "succeed_reward": 200,
   "out_penalty": -10,
-  "collision_penalty": -10,
-  "distance_scale_factor": 10,
-  "obstacle_bar_factor": 80,
+  "collision_penalty": -100,
+  "distance_scale_factor": 2000,
+  "obstacle_bar_factor": 4000,
   "target_bar_factor": 1000,
-  "wall_bar_factor": 200
+  "wall_bar_factor": 2000
 }
   
