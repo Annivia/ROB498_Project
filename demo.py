@@ -66,6 +66,7 @@ if __name__ == "__main__":
     checkpoint_dir='checkpoints/Without_Obstacle_Penalty/PPO_euclidean_04-18_23-36/checkpoint_000012'
     reward_type = extract_reward(checkpoint_dir)
     algorithm = extract_algorithm(checkpoint_dir)
+    print("Restoring checkpoint from ", checkpoint_dir)
 
     if (reward_type == 'euclidean'):
         register_env("PandaDiskPushingEnv", create_environment_euclidean)
